@@ -112,10 +112,13 @@ func (self *Container) Logs(c chan Logs) {
 	var msg Logs
 	for {
 		if err = ws.ReadJSON(&msg); err != nil {
-			if err != nil && err.Error() != "EOF" {
-				log.Println(err)
-			} else {
+			//Type switches don't work here, so we use a type assertion instead
+			_, ok := err.(*websocket.CloseError)
+			if ok {
+				close(c)
 				break
+			} else {
+				log.Println(err)
 			}
 		}
 		c <- msg
@@ -132,8 +135,8 @@ func (self *Container) Exec(command string, c chan Exec) {
 Loop:
 	for {
 		select {
-		case s := <-c:
-			if s.Output != "EOF" {
+		case s, open := <-c:
+			if open {
 				fmt.Printf("%s", s.Output)
 			} else {
 				break Loop
@@ -157,12 +160,16 @@ func (self *Container) Run(command string, c chan Exec) {
 	}
 
 	var msg Exec
+Loop:
 	for {
 		if err = ws.ReadJSON(&msg); err != nil {
-			if err != nil && err.Error() != "EOF" {
-				log.Println(err)
+			//Type switches don't work here, so we use a type assertion instead
+			_, ok := err.(*websocket.CloseError)
+			if ok {
+				close(c)
+				break Loop
 			} else {
-				break
+				log.Println(err)
 			}
 		}
 		c <- msg
