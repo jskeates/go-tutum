@@ -90,11 +90,8 @@ func GetContainer(uuid string) (Container, error) {
 	return response, nil
 }
 
-/*
-func GetContainerLogs
-Argument : a channel of type string for the output
-*/
-
+// Logs returns the container's logs through the given channel, wrapped in a Logs struct.
+// See https://docs.tutum.co/v2/api/?go#get-the-logs-of-a-container for more info.
 func (self *Container) Logs(c chan Logs) {
 
 	endpoint := "container/" + self.Uuid + "/logs/?user=" + User + "&token=" + ApiKey
@@ -125,10 +122,8 @@ func (self *Container) Logs(c chan Logs) {
 	}
 }
 
-/*
-func Exec
-Arguments : the command to execute, a channel of type string for the output
-*/
+// Exec runs the command in the container, and prints the output to the console.
+// When the command exits and the final output has been printed, the function returns.
 
 func (self *Container) Exec(command string, c chan Exec) {
 	go self.Run(command, c)
@@ -145,6 +140,9 @@ Loop:
 	}
 }
 
+// Run executes the command in the container, and returns the output to the
+// channel, wrapped in an Exec struct. When the command exits, the channel closes.
+// See https://docs.tutum.co/v2/api/?go#execute-command-inside-a-container for more info.
 func (self *Container) Run(command string, c chan Exec) {
 
 	endpoint := "container/" + self.Uuid + "/exec/?user=" + User + "&token=" + ApiKey + "&command=" + url.QueryEscape(command)
